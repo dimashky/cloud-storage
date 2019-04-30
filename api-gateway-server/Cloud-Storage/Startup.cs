@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Cloud_Storage
 {
@@ -21,7 +22,12 @@ namespace Cloud_Storage
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
+            services.AddHttpClient();
+            services.AddHttpClient("laravel", c =>
+            {
+                c.BaseAddress = new Uri("http://localhost:8000");
+                c.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
