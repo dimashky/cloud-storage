@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Cloud_Storage.Models;
+using Cloud_Storage.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -16,22 +18,21 @@ namespace Cloud_Storage.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
-
-        public AuthController(IHttpClientFactory httpClientFactory)
+        private readonly IAuthService _authService;
+        public AuthController(IHttpClientFactory httpClientFactory, IAuthService authService)
         {
             _httpClientFactory = httpClientFactory;
+            _authService = authService;
+
         }
 
         [HttpGet]
         [Route("api/user")]
-        public async Task<ActionResult<Object>> test()
+        public async Task<ActionResult<Object>> getUserFromAccessToken()
         {
             string accessToken = Request.Headers["Authorization"];
-            var client = _httpClientFactory.CreateClient("laravel");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", accessToken);
-            var res = await client.GetAsync("api/user");
-            if (!res.IsSuccessStatusCode) return Unauthorized();
-            var user = (await res.Content.ReadAsAsync<User>());
+            var user = await _authService.getUser(accessToken);
+            if (user == null) return Unauthorized();
             return user;
         }
 
@@ -55,23 +56,6 @@ namespace Cloud_Storage.Controllers
             if(!res.IsSuccessStatusCode) return BadRequest();
             var user = (await res.Content.ReadAsAsync<User>());
             return user;
-        }
-    }
-
-    public class User
-    {
-        public string email { get; set; }
-        public string name { get; set; }
-        public string accessToken { get; set; }
-        private string password { get; set; }
-
-
-
-        public User(string email, string password, string name = "user")
-        {
-            this.email = email;
-            this.password = password;
-            this.name = name;
         }
     }
 }

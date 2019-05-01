@@ -1,3 +1,4 @@
+using Cloud_Storage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -23,9 +24,15 @@ namespace Cloud_Storage
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddHttpClient();
+            services.AddTransient<IAuthService, AuthService>();
             services.AddHttpClient("laravel", c =>
             {
                 c.BaseAddress = new Uri("http://localhost:8000");
+                c.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
+            services.AddHttpClient("DFS", c =>
+            {
+                c.BaseAddress = new Uri("http://localhost:5000");
                 c.DefaultRequestHeaders.Add("Accept", "application/json");
             });
             // In production, the React files will be served from this directory
