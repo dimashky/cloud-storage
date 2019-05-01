@@ -1,5 +1,6 @@
 ﻿import Swal from 'sweetalert2';
 import RegisterDialog from './RegisterDialog';
+import User from '../api/User';
 
 export default async function LoginDialog() {
     let { value: user } = await Swal.fire({
@@ -23,7 +24,12 @@ export default async function LoginDialog() {
             }
             Swal.resetValidationMessage();
             return new Promise(function (resolve) {
-                resolve();
+                User.login(email, password)
+                    .then(res => resolve(res))
+                    .catch(err => {
+                        Swal.showValidationMessage(err.message);
+                        Swal.hideLoading();
+                    });
             });
         },
         onOpen: function () {
@@ -35,5 +41,5 @@ export default async function LoginDialog() {
         user = await RegisterDialog();
     }
 
-    return;
+    return user;
 };
