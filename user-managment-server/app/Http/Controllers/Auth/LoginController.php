@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Symfony\Component\HttpFoundation\Request;
 
 class LoginController extends Controller
 {
@@ -35,5 +36,18 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    public function loginAPI(Request $request) {
+        try {
+            if(! \Auth::attempt($request->only('email', 'password'))) {
+                throw new \Exception("invalid email or password or your account is blocked");
+            }
+            $user = \Auth::user();
+            $user->accessToken = $user->createToken('CloudStorage')->accessToken;
+            return $this->response('success', $user);
+        } catch (\Exception $e) {
+            return $this->response('failed, '.$e->getMessage(), null, 400);
+        }
     }
 }

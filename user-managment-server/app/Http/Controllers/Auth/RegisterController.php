@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Symfony\Component\HttpFoundation\Request;
 
 class RegisterController extends Controller
 {
@@ -68,5 +69,19 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+    }
+
+    protected function registerAPI(Request $request)
+    {
+        $data = $request->all();
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+        ]);
+        \Auth::attempt($request->only('email', 'password'));
+        $user = \Auth::user();
+        $user->accessToken = $user->createToken('CloudStorage')->accessToken;
+        return $this->response('success', $user);
     }
 }
