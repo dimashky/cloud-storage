@@ -45,7 +45,7 @@ class LoginController extends Controller
             }
             $user = \Auth::user();
             $user->accessToken = $user->createToken('CloudStorage')->accessToken;
-            return $this->response('success', $user);
+            return $user;
         } catch (\Exception $e) {
             return $this->response('failed, '.$e->getMessage(), null, 400);
         }

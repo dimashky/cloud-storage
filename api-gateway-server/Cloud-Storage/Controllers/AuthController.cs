@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -11,7 +12,6 @@ using Newtonsoft.Json.Linq;
 
 namespace Cloud_Storage.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -23,60 +23,49 @@ namespace Cloud_Storage.Controllers
         }
 
         [HttpGet]
-        public async Task<string> test()
+        [Route("api/user")]
+        public async Task<ActionResult<Object>> test()
         {
+            string accessToken = Request.Headers["Authorization"];
             var client = _httpClientFactory.CreateClient("laravel");
-            //            client.DefaultRequestHeaders.Authorization = string("Bearer " + Request.Headers["Authorization"]);
-            string result = "";
-            try
-            {
-                result = await client.GetStringAsync("/api/user");
-            }
-            catch (Exception e)
-            {
-                result = "Unauthorized";
-            }
-
-            return result;
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", accessToken);
+            var res = await client.GetAsync("api/user");
+            if (!res.IsSuccessStatusCode) return Unauthorized();
+            var user = (await res.Content.ReadAsAsync<User>());
+            return user;
         }
 
         [HttpPost]
-        public async Task<String> login([FromBody]JObject body)
-        {
-            return "asdASD";
-
+        [Route ("api/login")]
+        public async Task<ActionResult<Object>> login([FromBody]JObject body)
+        {           
             var client = _httpClientFactory.CreateClient("laravel");
+            var res = await client.PostAsJsonAsync("api/login", body);
+            if (!res.IsSuccessStatusCode) return BadRequest();
+            var user = (await res.Content.ReadAsAsync<User>());
+            return user;
+        }
 
-            User user = new User(body["email"].ToString(), body["password"].ToString());
-            string result = "";
-         
-            try
-            {
-                var jsonAsString = JsonConvert.SerializeObject(user);
-                var res = await client.PostAsync("/api/login", new StringContent(jsonAsString, Encoding.UTF8, "application/json"));
-                result =  res.ToString();
-                
-            }
-            catch (Exception e)
-            {
-                result = "Unauthorized";
-            }
-
-            return result;
+        [HttpPost]
+        [Route("api/register")]
+        public async Task<ActionResult<Object>> register([FromBody]JObject body)
+        {
+            var client = _httpClientFactory.CreateClient("laravel");
+            var res = await client.PostAsJsonAsync("api/register", body);
+            if(!res.IsSuccessStatusCode) return BadRequest();
+            var user = (await res.Content.ReadAsAsync<User>());
+            return user;
         }
     }
 
-    class User
+    public class User
     {
-        private string email;
-        private string name;
-        private string password;
-        private object read;
+        public string email { get; set; }
+        public string name { get; set; }
+        public string accessToken { get; set; }
+        private string password { get; set; }
 
-        public User(object read)
-        {
-            this.read = read;
-        }
+
 
         public User(string email, string password, string name = "user")
         {

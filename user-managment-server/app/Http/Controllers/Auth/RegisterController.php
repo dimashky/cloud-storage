@@ -82,6 +82,6 @@ class RegisterController extends Controller
         \Auth::attempt($request->only('email', 'password'));
         $user = \Auth::user();
         $user->accessToken = $user->createToken('CloudStorage')->accessToken;
-        return $this->response('success', $user);
+        return $user;
     }
 }
