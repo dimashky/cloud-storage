@@ -8,17 +8,19 @@ namespace Cloud_Storage.Models
     public class User
     {
         public string email { get; set; }
+        public int id { get; set; }
         public string name { get; set; }
         public string accessToken { get; set; }
         private string password { get; set; }
 
 
 
-        public User(string email, string password, string name)
+        public User(int id, string email, string password, string name)
         {
             this.email = email;
             this.password = password;
             this.name = name;
+            this.id = id;
         }
     }
 }

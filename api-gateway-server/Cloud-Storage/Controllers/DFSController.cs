@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Formatting;
 using System.Threading.Tasks;
 using Cloud_Storage.Models;
 using Cloud_Storage.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 
 namespace Cloud_Storage.Controllers
 {
@@ -30,8 +34,59 @@ namespace Cloud_Storage.Controllers
             if (user == null) return Unauthorized();
 
             var client = _httpClientFactory.CreateClient("DFS");
-            var res = await client.GetAsync("files");
+            var res = await client.GetAsync("files/"+user.id);
             return await res.Content.ReadAsStringAsync();
         }
+
+        [Route("api/files")]
+        [HttpPost]
+        public async Task<ActionResult<Object>> upload([FromForm]FileRequestModel body)
+        {
+            var user = await _authService.getUser(Request.Headers["Authorization"]);
+            if (user == null) return BadRequest();
+
+            var client = _httpClientFactory.CreateClient("DFS");
+            body.owner_id = user.id;
+
+            var multi = new MultipartFormDataContent();
+            var fileContent = new StreamContent(body.file.OpenReadStream());
+            multi.Add(fileContent, "file", body.file.FileName);
+            multi.Add(new StringContent(""+(user.id)), "owner_id");
+            multi.Add(new StringContent("" + body.parent_id), "parent_id");
+            var res = await client.PostAsync("upload", multi);
+            return await res.Content.ReadAsStringAsync();
+        }
+
+        [Route("api/files/{id}")]
+        [HttpPut("{id}")]
+        public async Task<ActionResult<Object>> update(int id, [FromBody]JObject body)
+        {
+            var user = await _authService.getUser(Request.Headers["Authorization"]);
+            if (user == null) return BadRequest();
+
+            var client = _httpClientFactory.CreateClient("DFS");
+            var res = await client.PutAsJsonAsync("file/id", body);
+            return await res.Content.ReadAsStringAsync();
+        }
+
+        [Route("api/files/{id}")]
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Object>> delete(int id, [FromBody]JObject body)
+        {
+            var user = await _authService.getUser(Request.Headers["Authorization"]);
+            if (user == null) return BadRequest();
+
+            var client = _httpClientFactory.CreateClient("DFS");
+            var res = await client.DeleteAsync("file/id");
+            return await res.Content.ReadAsStringAsync();
+        }
+    }
+
+    public class FileRequestModel
+    {
+        public int owner_id { get; set; }
+        public int parent_id { get; set; }
+        public IFormFile file { get; set; }
+        public string name { get; set; }
     }
 }
