@@ -57,27 +57,27 @@ namespace Cloud_Storage.Controllers
             return await res.Content.ReadAsStringAsync();
         }
 
-        [Route("api/files/{id}")]
         [HttpPut("{id}")]
+        [Route("api/update-file/{id}")]
         public async Task<ActionResult<Object>> update(int id, [FromBody]JObject body)
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
             if (user == null) return BadRequest();
 
             var client = _httpClientFactory.CreateClient("DFS");
-            var res = await client.PutAsJsonAsync("file/id", body);
+            var res = await client.PutAsJsonAsync("file/"+id, body);
             return await res.Content.ReadAsStringAsync();
         }
 
-        [Route("api/files/{id}")]
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Object>> delete(int id, [FromBody]JObject body)
+        [Route("api/delete-file/{id}")]
+        public async Task<ActionResult<Object>> delete(int id)
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
             if (user == null) return BadRequest();
 
             var client = _httpClientFactory.CreateClient("DFS");
-            var res = await client.DeleteAsync("file/id");
+            var res = await client.DeleteAsync("file/"+id);
             return await res.Content.ReadAsStringAsync();
         }
     }
