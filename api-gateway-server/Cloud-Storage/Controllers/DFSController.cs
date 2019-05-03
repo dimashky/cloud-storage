@@ -55,7 +55,22 @@ namespace Cloud_Storage.Controllers
             multi.Add(new StringContent(""+(user.id)), "owner_id");
             multi.Add(new StringContent("" + body.parent_id), "parent_id");
             var res = await client.PostAsync("upload", multi);
-            return await res.Content.ReadAsAsync<JObject>();
+            if (!res.IsSuccessStatusCode) return BadRequest();
+            return await res.Content.ReadAsAsync<Object>();
+        }
+
+        [HttpPost]
+        [Route("api/folder")]
+        public async Task<ActionResult<Object>> createFolder([FromBody]JObject body)
+        {
+            var user = await _authService.getUser(Request.Headers["Authorization"]);
+            if (user == null) return Unauthorized();
+
+            var client = _httpClientFactory.CreateClient("DFS");
+            body.Add("owner_id", user.id);
+            var res = await client.PostAsJsonAsync("create-folder", body);
+            if (!res.IsSuccessStatusCode) return BadRequest();
+            return await res.Content.ReadAsAsync<Object>();
         }
 
         [HttpPut("{id}")]
@@ -63,11 +78,11 @@ namespace Cloud_Storage.Controllers
         public async Task<ActionResult<Object>> update(int id, [FromBody]JObject body)
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
-            if (user == null) return BadRequest();
+            if (user == null) return Unauthorized();
 
             var client = _httpClientFactory.CreateClient("DFS");
             var res = await client.PutAsJsonAsync("file/"+id, body);
-            return await res.Content.ReadAsAsync<JObject>();
+            return await res.Content.ReadAsAsync<Object>();
         }
 
         [HttpDelete("{id}")]
@@ -75,11 +90,11 @@ namespace Cloud_Storage.Controllers
         public async Task<ActionResult<Object>> delete(int id)
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
-            if (user == null) return BadRequest();
+            if (user == null) return Unauthorized();
 
             var client = _httpClientFactory.CreateClient("DFS");
             var res = await client.DeleteAsync("file/"+id);
-            return await res.Content.ReadAsAsync<JObject>();
+            return await res.Content.ReadAsAsync<Object>();
         }
     }
 

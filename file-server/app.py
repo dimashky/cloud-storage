@@ -41,9 +41,18 @@ def upload():
     if file:
         return jsonify(fileRepo.upload(owner_id, file, parent_id))
 
+@app.route("/create-folder", methods=["POST"])
+def createFolder():
+    cnt = -1
+    if(request.is_json):
+        content = request.get_json()
+        cnt = fileRepo.createFolder(content["owner_id"], content["name"], content["parent_id"])
+    return jsonify(cnt)
+
 
 @app.route("/file/<file_id>", methods=["PUT"])
 def update(file_id):
+    cnt = -1
     if(request.is_json):
         content = request.get_json()
         cnt = fileRepo.update(file_id, content["name"], content["parent_id"])

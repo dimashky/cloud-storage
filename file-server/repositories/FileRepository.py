@@ -20,6 +20,7 @@ class FileRepository:
         rows = mycursor.fetchall()
         folders = [Folder(*row) for row in rows if not row[len(row)-1]]
         files = [File(*row, folders) for row in rows if row[len(row)-1]]
+        folders = [folder.setKey(folders) for folder in folders]
         return (files, folders)
 
     def shared(self, userId):
@@ -42,6 +43,20 @@ class FileRepository:
         mycursor = self.mydb.cursor()
         sql = "INSERT INTO files (owner_id, name, modified_at, size, parent_id, path) VALUES (%s, %s, %s, %s,%s,%s)"
         val = (owner_id, file.filename, modified, size, parent, path)
+        mycursor.execute(sql, val)
+
+        self.mydb.commit()
+
+        mycursor.close()
+        return mycursor.lastrowid
+
+    def createFolder(self, owner_id, folder_name, parent_id):
+        modified = datetime.now().isoformat()
+        parent = parent_id
+
+        mycursor = self.mydb.cursor()
+        sql = "INSERT INTO files (owner_id, name, modified_at, size, parent_id) VALUES (%s, %s, %s, %s,%s)"
+        val = (owner_id, folder_name, modified, 0, parent)
         mycursor.execute(sql, val)
 
         self.mydb.commit()

@@ -23,7 +23,7 @@ export class Home extends Component {
         this.state = {
             files: [],
             loading: false,
-	          selectedItem: {}
+	          selectedItem: null
         }
     }
 
@@ -45,12 +45,28 @@ export class Home extends Component {
     }
 
     handleCreateFolder = (key) => {
-        this.setState(state => {
-            state.files = state.files.concat([{
-                key: key,
-            }]);
-            return state
-        })
+    	let name = key.split("/");
+    	name = name[name.length - 2];
+    	let parent_id = 0;
+    	if(this.state.selectedItem){
+    		parent_id = this.state.selectedItem.id
+	    }
+	    this.setState({loading: true});
+	    FileManager.createFolder(name, parent_id)
+		    .then((id) => {
+			    this.setState({loading: false});
+			    this.setState(state => {
+				    state.files = state.files.concat([{
+					    key,
+					    id
+				    }]);
+				    return state
+			    })
+		    })
+		    .catch(err => {
+		    	alert(err.message);
+			    this.setState({loading: false});
+		    });
     }
 
     handleCreateFiles = (files, prefix) => {
@@ -123,6 +139,13 @@ export class Home extends Component {
         })
     }
 
+    handleSelectFileOrFolder = (file) => {
+    	if(!file){
+    		return;
+	    }
+	    this.setState({selectedItem: file});
+    }
+
     handleDeleteFolder = (folderKey) => {
         this.setState(state => {
             const newFiles = []
@@ -153,8 +176,8 @@ export class Home extends Component {
 
 	renderContextMenu = () => (
 		<Menu id='menu_id'>
-			{!this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-download"/>Download</Item>}
-			{this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-upload"/>Upload</Item>}
+			{this.state.selectedItem && this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-download"/>Download</Item>}
+			{this.state.selectedItem && !this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-upload"/>Upload</Item>}
 		</Menu>
 	);
 
@@ -198,11 +221,11 @@ export class Home extends Component {
 					                Folder: <i className="fas fa-folder" aria-hidden="true" />,
 					                FolderOpen: <i className="fas fa-folder-open" aria-hidden="true" />,
 					                Delete: <i className="fas fa-trash" aria-hidden="true" />,
-					                Download: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
+					                Download: <i className="fas fa-download" aria-hidden="true" />,
 					                Loading: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
 				                }}
 				                detailRenderer={(e)=><span>{e.name}</span>}
-				                onSelect={(e) => this.setState({selectedItem: e})}
+				                onSelect={this.handleSelectFileOrFolder}
 				                onCreateFolder={this.handleCreateFolder}
 				                onCreateFiles={this.handleCreateFiles}
 				                onMoveFolder={this.handleRenameFolder}
