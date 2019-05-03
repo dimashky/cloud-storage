@@ -14,12 +14,11 @@ async function init() {
     let access_token = localStorage.getItem('access_token');
     let current_user = await User.checkAccessToken(access_token);
     if (!access_token || !current_user) {
-        const user = await LoginDialog(); 
-        current_user = user;
+	    current_user= await LoginDialog();
     }
-    
-    User.setUser(current_user, current_user.accessToken);
 
+    User.setUser(current_user, current_user.accessToken);
+    console.log("hello user: "+ current_user.name);
     ReactDOM.render(
         <BrowserRouter basename={baseUrl}>
             <App />

@@ -3,6 +3,7 @@ import FileBrowser, { Icons } from 'react-keyed-file-browser';
 import FileManager from '../api/FileManager';
 import Moment from 'moment';
 import 'react-keyed-file-browser/dist/react-keyed-file-browser.css';
+import LinearProgress from '@material-ui/core/LinearProgress';
 
 export class Home extends Component {
     static displayName = Home.name;
@@ -10,21 +11,33 @@ export class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            files: []
+            files: [],
+            loading: false
         }
     }
 
     componentDidMount() {
-        FileManager.getFiles()
-            .then(files => this.setState({ files }))
-            .catch(err => alert(err.message));
+        this.getFolders();
+    }
+
+    getFolders(){
+	    this.setState({loading: true});
+	    FileManager.getFiles()
+		    .then(files => {
+			    this.setState({ files });
+			    this.setState({loading: false});
+		    })
+		    .catch(err => {
+			    alert(err.message);
+			    this.setState({loading: false});
+		    });
     }
 
     handleCreateFolder = (key) => {
         this.setState(state => {
             state.files = state.files.concat([{
                 key: key,
-            }])
+            }]);
             return state
         })
     }
@@ -126,10 +139,15 @@ export class Home extends Component {
     }
 
     render() {
-        const { files } = this.state;
+        const { files, loading } = this.state;
 
         return (
             <div className="file-browser-container">
+              {loading && (
+	              <div style={{padding: 16}}>
+		              <LinearProgress />
+                </div>
+              )}
                 <FileBrowser
                     files={files}
                     icons={{

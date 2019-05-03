@@ -35,7 +35,8 @@ namespace Cloud_Storage.Controllers
 
             var client = _httpClientFactory.CreateClient("DFS");
             var res = await client.GetAsync("files/"+user.id);
-            return await res.Content.ReadAsStringAsync();
+            if (!res.IsSuccessStatusCode) return BadRequest();
+            return await res.Content.ReadAsAsync<Object>();
         }
 
         [Route("api/files")]
@@ -54,7 +55,7 @@ namespace Cloud_Storage.Controllers
             multi.Add(new StringContent(""+(user.id)), "owner_id");
             multi.Add(new StringContent("" + body.parent_id), "parent_id");
             var res = await client.PostAsync("upload", multi);
-            return await res.Content.ReadAsStringAsync();
+            return await res.Content.ReadAsAsync<JObject>();
         }
 
         [HttpPut("{id}")]
@@ -66,7 +67,7 @@ namespace Cloud_Storage.Controllers
 
             var client = _httpClientFactory.CreateClient("DFS");
             var res = await client.PutAsJsonAsync("file/"+id, body);
-            return await res.Content.ReadAsStringAsync();
+            return await res.Content.ReadAsAsync<JObject>();
         }
 
         [HttpDelete("{id}")]
@@ -78,7 +79,7 @@ namespace Cloud_Storage.Controllers
 
             var client = _httpClientFactory.CreateClient("DFS");
             var res = await client.DeleteAsync("file/"+id);
-            return await res.Content.ReadAsStringAsync();
+            return await res.Content.ReadAsAsync<JObject>();
         }
     }
 

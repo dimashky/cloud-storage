@@ -2,17 +2,15 @@ import mysql.connector
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
-from flask_sqlalchemy import SQLAlchemy
-
-SQLALCHEMY_DATABASE_URI = 'mysql://root@localhost/cloud_storage_files'
-
+from models.File import File
+from models.Folder import Folder
 
 class FileRepository:
     def __init__(self):
         self.mydb = mysql.connector.connect(
             host="localhost",
             user="root",
-            passwd="",
+            passwd="root",
             database="cloud_storage_files"
         )
 
@@ -20,7 +18,10 @@ class FileRepository:
         mycursor = self.mydb.cursor()
         mycursor.execute("SELECT * FROM files WHERE owner_id = "+str(userId))
         rows = mycursor.fetchall()
-        return rows
+        print(rows)
+        folders = [Folder(*row) for row in rows if not row[len(row)-1]]
+        files = [File(*row, folders) for row in rows if row[len(row)-1]]
+        return (files, folders)
 
     def shared(self, userId):
         mycursor = self.mydb.cursor()
