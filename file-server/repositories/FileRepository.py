@@ -18,7 +18,6 @@ class FileRepository:
         mycursor = self.mydb.cursor()
         mycursor.execute("SELECT * FROM files WHERE owner_id = "+str(userId))
         rows = mycursor.fetchall()
-        print(rows)
         folders = [Folder(*row) for row in rows if not row[len(row)-1]]
         files = [File(*row, folders) for row in rows if row[len(row)-1]]
         return (files, folders)

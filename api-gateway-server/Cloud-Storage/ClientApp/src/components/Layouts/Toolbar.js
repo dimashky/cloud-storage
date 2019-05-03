@@ -7,11 +7,13 @@ import IconButton from '@material-ui/core/IconButton';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
+import User from "../../api/User";
 
 class MenuAppBar extends React.Component {
     state = {
         auth: true,
         anchorEl: null,
+        username: User.getUser().name
     };
 
     handleChange = event => {
@@ -32,18 +34,19 @@ class MenuAppBar extends React.Component {
     };
 
     render() {
-        const { auth, anchorEl } = this.state;
+        const { auth, anchorEl, username } = this.state;
         const open = Boolean(anchorEl);
 
         return (
             <div className="toolbar">
                 <AppBar position="static" color="primary">
                     <Toolbar>
-                        <Typography variant="h4" color="inherit">
+                        <Typography variant="h5" color="inherit">
                             Cloud Storage
                         </Typography>
                         <div style={{flexGrow:1}}/>
                         <div>
+                            <span>Hello {username}</span>
                             <IconButton
                                 aria-owns="menu-appbar"
                                 aria-haspopup="true"
@@ -75,8 +78,5 @@ class MenuAppBar extends React.Component {
         );
     }
 }
-
-MenuAppBar.propTypes = {
-};
 
 export default MenuAppBar;

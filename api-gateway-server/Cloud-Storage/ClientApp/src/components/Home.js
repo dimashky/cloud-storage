@@ -1,9 +1,17 @@
 import React, { Component } from 'react';
-import FileBrowser, { Icons } from 'react-keyed-file-browser';
+import FileBrowser from 'react-keyed-file-browser';
 import FileManager from '../api/FileManager';
 import Moment from 'moment';
+import Grid from '@material-ui/core/Grid';
+import Divider from '@material-ui/core/Divider';
 import 'react-keyed-file-browser/dist/react-keyed-file-browser.css';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import FolderShared from '@material-ui/icons/FolderShared';
+import Folder from '@material-ui/icons/Folder';
 
 export class Home extends Component {
     static displayName = Home.name;
@@ -142,35 +150,56 @@ export class Home extends Component {
         const { files, loading } = this.state;
 
         return (
-            <div className="file-browser-container">
-              {loading && (
-	              <div style={{padding: 16}}>
-		              <LinearProgress />
-                </div>
-              )}
-                <FileBrowser
-                    files={files}
-                    icons={{
-                        File: <i className="fas fa-file" aria-hidden="true" />,
-                        Image: <i className="fas fa-file-image" aria-hidden="true" />,
-                        PDF: <i className="fas fa-file-pdf" aria-hidden="true" />,
-                        Rename: <i className="fas fa-i-cursor" aria-hidden="true" />,
-                        Folder: <i className="fas fa-folder" aria-hidden="true" />,
-                        FolderOpen: <i className="fas fa-folder-open" aria-hidden="true" />,
-                        Delete: <i className="fas fa-trash" aria-hidden="true" />,
-                        Loading: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
-                    }}
+            <Grid container spacing={16} style={{marginTop: 40}}>
+                <Grid item xs={3} style={{borderRight: "1px solid grey"}}>
+	                <List component="nav">
+                      <ListItem button>
+			                <ListItemIcon>
+				                <Folder />
+			                </ListItemIcon>
+			                <ListItemText primary="My Folder" />
+		                </ListItem>
+		                <Divider/>
+		                <ListItem button>
+			                <ListItemIcon>
+				                <FolderShared />
+			                </ListItemIcon>
+			                <ListItemText primary="Shared with Me" />
+		                </ListItem>
+	                </List>
+                </Grid>
+                <Grid item xs={9}>
+	                <div className="file-browser-container">
+		                {loading && (
+			                <div style={{padding: 16}}>
+				                <LinearProgress />
+			                </div>
+		                )}
+		                <FileBrowser
+			                files={files}
+			                icons={{
+				                File: <i className="fas fa-file" aria-hidden="true" />,
+				                Image: <i className="fas fa-file-image" aria-hidden="true" />,
+				                PDF: <i className="fas fa-file-pdf" aria-hidden="true" />,
+				                Rename: <i className="fas fa-i-cursor" aria-hidden="true" />,
+				                Folder: <i className="fas fa-folder" aria-hidden="true" />,
+				                FolderOpen: <i className="fas fa-folder-open" aria-hidden="true" />,
+				                Delete: <i className="fas fa-trash" aria-hidden="true" />,
+				                Loading: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
+			                }}
 
-                    onCreateFolder={this.handleCreateFolder}
-                    onCreateFiles={this.handleCreateFiles}
-                    onMoveFolder={this.handleRenameFolder}
-                    onMoveFile={this.handleRenameFile}
-                    onRenameFolder={this.handleRenameFolder}
-                    onRenameFile={this.handleRenameFile}
-                    onDeleteFolder={this.handleDeleteFolder}
-                    onDeleteFile={this.handleDeleteFile}
-                />
-            </div>
+			                onCreateFolder={this.handleCreateFolder}
+			                onCreateFiles={this.handleCreateFiles}
+			                onMoveFolder={this.handleRenameFolder}
+			                onMoveFile={this.handleRenameFile}
+			                onRenameFolder={this.handleRenameFolder}
+			                onRenameFile={this.handleRenameFile}
+			                onDeleteFolder={this.handleDeleteFolder}
+			                onDeleteFile={this.handleDeleteFile}
+		                />
+	                </div>
+                </Grid>
+            </Grid>
         );
     }
 }
