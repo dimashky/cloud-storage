@@ -10,13 +10,13 @@ class File(FileComponent):
     
     def getKey(self, parentId, folders):
         if not parentId:
-            return "/"
+            return ""
         key = ""
         folder = [folder for folder in folders if folder.id == parentId]
         if not len(folder):
             raise Exception("Folder not found!")
         folder = folder[0]
         key += self.getKey(folder.parent, folders)
-        folder.key = key
+        folder.key = key +  folder.name + "/"
         key += folder.name + "/"
         return key

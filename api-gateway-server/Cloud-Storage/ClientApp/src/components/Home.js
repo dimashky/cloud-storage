@@ -12,6 +12,8 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import FolderShared from '@material-ui/icons/FolderShared';
 import Folder from '@material-ui/icons/Folder';
+import { Menu, Item, IconFont, MenuProvider } from 'react-contexify';
+import 'react-contexify/dist/ReactContexify.min.css';
 
 export class Home extends Component {
     static displayName = Home.name;
@@ -20,7 +22,8 @@ export class Home extends Component {
         super(props);
         this.state = {
             files: [],
-            loading: false
+            loading: false,
+	          selectedItem: {}
         }
     }
 
@@ -146,6 +149,15 @@ export class Home extends Component {
         })
     }
 
+	onClick = ({ event, props }) => console.log(event,props);
+
+	renderContextMenu = () => (
+		<Menu id='menu_id'>
+			{!this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-download"/>Download</Item>}
+			{this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-upload"/>Upload</Item>}
+		</Menu>
+	);
+
     render() {
         const { files, loading } = this.state;
 
@@ -175,28 +187,34 @@ export class Home extends Component {
 				                <LinearProgress />
 			                </div>
 		                )}
-		                <FileBrowser
-			                files={files}
-			                icons={{
-				                File: <i className="fas fa-file" aria-hidden="true" />,
-				                Image: <i className="fas fa-file-image" aria-hidden="true" />,
-				                PDF: <i className="fas fa-file-pdf" aria-hidden="true" />,
-				                Rename: <i className="fas fa-i-cursor" aria-hidden="true" />,
-				                Folder: <i className="fas fa-folder" aria-hidden="true" />,
-				                FolderOpen: <i className="fas fa-folder-open" aria-hidden="true" />,
-				                Delete: <i className="fas fa-trash" aria-hidden="true" />,
-				                Loading: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
-			                }}
+		                <MenuProvider id="menu_id">
+			                <FileBrowser
+				                files={files}
+				                icons={{
+					                File: <i className="fas fa-file" aria-hidden="true" />,
+					                Image: <i className="fas fa-file-image" aria-hidden="true" />,
+					                PDF: <i className="fas fa-file-pdf" aria-hidden="true" />,
+					                Rename: <i className="fas fa-i-cursor" aria-hidden="true" />,
+					                Folder: <i className="fas fa-folder" aria-hidden="true" />,
+					                FolderOpen: <i className="fas fa-folder-open" aria-hidden="true" />,
+					                Delete: <i className="fas fa-trash" aria-hidden="true" />,
+					                Download: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
+					                Loading: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
+				                }}
+				                detailRenderer={(e)=><span>{e.name}</span>}
+				                onSelect={(e) => this.setState({selectedItem: e})}
+				                onCreateFolder={this.handleCreateFolder}
+				                onCreateFiles={this.handleCreateFiles}
+				                onMoveFolder={this.handleRenameFolder}
+				                onMoveFile={this.handleRenameFile}
+				                onRenameFolder={this.handleRenameFolder}
+				                onRenameFile={this.handleRenameFile}
+				                onDeleteFolder={this.handleDeleteFolder}
+				                onDeleteFile={this.handleDeleteFile}
+			                />
+		                </MenuProvider>
+		                {this.renderContextMenu()}
 
-			                onCreateFolder={this.handleCreateFolder}
-			                onCreateFiles={this.handleCreateFiles}
-			                onMoveFolder={this.handleRenameFolder}
-			                onMoveFile={this.handleRenameFile}
-			                onRenameFolder={this.handleRenameFolder}
-			                onRenameFile={this.handleRenameFile}
-			                onDeleteFolder={this.handleDeleteFolder}
-			                onDeleteFile={this.handleDeleteFile}
-		                />
 	                </div>
                 </Grid>
             </Grid>
