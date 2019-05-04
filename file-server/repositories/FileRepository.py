@@ -48,7 +48,10 @@ class FileRepository:
         self.mydb.commit()
 
         mycursor.close()
-        return mycursor.lastrowid
+        files, folders = self.index(owner_id)
+        print(folders)
+        print(parent_id)
+        return File(mycursor.lastrowid, filename, "", owner_id, modified, size, parent, path, folders).__dict__
 
     def createFolder(self, owner_id, folder_name, parent_id):
         modified = datetime.now().isoformat()

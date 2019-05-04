@@ -14,7 +14,7 @@ class FileManager {
 		let data = new FormData();
 		data.append("file", file);
 		data.append("parent_id", parent_id);
-		return (await $http.post("upload", data)).data;
+		return (await $http.post("files", data)).data;
 	}
 
 	static async createFolder(name, parent_id) {

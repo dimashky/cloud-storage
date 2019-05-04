@@ -9,12 +9,12 @@ class File(FileComponent):
         return self.__dict__
     
     def getKey(self, parentId, folders):
-        if not parentId:
+        if not parentId or parentId == 0:
             return ""
         key = ""
-        folder = [folder for folder in folders if folder.id == parentId]
+        folder = [folder for folder in folders if folder.id == int(parentId)]
         if not len(folder):
-            raise Exception("Folder not found!")
+            return "//"
         folder = folder[0]
         key += self.getKey(folder.parent, folders)
         folder.key = key +  folder.name + "/"

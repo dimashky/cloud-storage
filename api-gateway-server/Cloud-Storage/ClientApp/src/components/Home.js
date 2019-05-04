@@ -14,6 +14,7 @@ import FolderShared from '@material-ui/icons/FolderShared';
 import Folder from '@material-ui/icons/Folder';
 import { Menu, Item, IconFont, MenuProvider } from 'react-contexify';
 import 'react-contexify/dist/ReactContexify.min.css';
+import Swal from 'sweetalert2';
 
 export class Home extends Component {
     static displayName = Home.name;
@@ -67,38 +68,41 @@ export class Home extends Component {
 		    	alert(err.message);
 			    this.setState({loading: false});
 		    });
-    }
+    };
 
-    handleCreateFiles = (files, prefix) => {
-        this.setState(state => {
-            const newFiles = files.map((file) => {
-                let newKey = prefix
-                if (prefix !== '' && prefix.substring(prefix.length - 1, prefix.length) !== '/') {
-                    newKey += '/'
-                }
-                newKey += file.name
-                return {
-                    key: newKey,
-                    size: file.size,
-                    modified: +Moment(),
-                }
-            })
-
-            const uniqueNewFiles = []
-            newFiles.map((newFile) => {
-                let exists = false
-                state.files.map((existingFile) => {
-                    if (existingFile.key === newFile.key) {
-                        exists = true
-                    }
-                })
-                if (!exists) {
-                    uniqueNewFiles.push(newFile)
-                }
-            })
-            state.files = state.files.concat(uniqueNewFiles)
-            return state
-        })
+    handleCreateFiles = (files) => {
+	     Swal.fire({
+		     title: "Select a file",
+		     input: "file",
+		     showCancelButton: true,
+		     showLoaderOnConfirm: true,
+		     inputAttributes: {
+			     "aria-label": "Upload file"
+		     },
+		     preConfirm: file => {
+			     return new Promise(resolve => {
+				     let parent_id = this.state.selectedItem.id ? this.state.selectedItem.id : 0;
+				     FileManager.uploadFile(file, parent_id)
+					     .then((file) => {
+						     this.setState(state => {
+							     state.files = state.files.concat([file]);
+							     return state
+						     });
+						     Swal.fire({
+								     type: "success",
+								     title: "تم رفع الملف بنجاح"
+							     })
+							     .then(() => {
+								     resolve();
+							     });
+					     })
+					     .catch(err => {
+						     Swal.fire(err.message)
+							     .then(() => resolve());
+					     });
+			     });
+		     }
+	     });
     }
 
     handleRenameFolder = (oldKey, newKey) => {
@@ -146,30 +150,22 @@ export class Home extends Component {
 	    this.setState({selectedItem: file});
     }
 
-    handleDeleteFolder = (folderKey) => {
-        this.setState(state => {
-            const newFiles = []
-            state.files.map((file) => {
-                if (file.key.substr(0, folderKey.length) !== folderKey) {
-                    newFiles.push(file)
-                }
-            })
-            state.files = newFiles
-            return state
-        })
-    }
-
-    handleDeleteFile = (fileKey) => {
-        this.setState(state => {
-            const newFiles = []
-            state.files.map((file) => {
-                if (file.key !== fileKey) {
-                    newFiles.push(file)
-                }
-            })
-            state.files = newFiles
-            return state
-        })
+    handleDeleteFileOrFolder = (fileKey) => {
+        let files = this.state.files;
+        let idx = files.findIndex(e => e.key === fileKey);
+        if(idx < 0){
+        	alert("Error");
+        	return;
+        }
+        let file = files[idx];
+        FileManager.DeleteFolderOrFile(file.id)
+	        .then(() => {
+		        files.splice(idx, 1);
+		        this.setState({files: [...files]});
+	        })
+	        .catch(err => {
+	        	alert(err.message);
+	        })
     }
 
 	onClick = ({ event, props }) => console.log(event,props);
@@ -177,7 +173,7 @@ export class Home extends Component {
 	renderContextMenu = () => (
 		<Menu id='menu_id'>
 			{this.state.selectedItem && this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-download"/>Download</Item>}
-			{this.state.selectedItem && !this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-upload"/>Upload</Item>}
+			{this.state.selectedItem && !this.state.selectedItem.path && <Item onClick={this.handleCreateFiles}><IconFont className="fas fa-upload"/>Upload</Item>}
 		</Menu>
 	);
 
@@ -232,8 +228,8 @@ export class Home extends Component {
 				                onMoveFile={this.handleRenameFile}
 				                onRenameFolder={this.handleRenameFolder}
 				                onRenameFile={this.handleRenameFile}
-				                onDeleteFolder={this.handleDeleteFolder}
-				                onDeleteFile={this.handleDeleteFile}
+				                onDeleteFolder={this.handleDeleteFileOrFolder}
+				                onDeleteFile={this.handleDeleteFileOrFolder}
 			                />
 		                </MenuProvider>
 		                {this.renderContextMenu()}
