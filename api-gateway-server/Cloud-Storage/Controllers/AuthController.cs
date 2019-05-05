@@ -23,12 +23,11 @@ namespace Cloud_Storage.Controllers
         {
             _httpClientFactory = httpClientFactory;
             _authService = authService;
-
         }
 
         [HttpGet]
         [Route("api/user")]
-        public async Task<ActionResult<Object>> getUserFromAccessToken()
+        public async Task<ActionResult<User>> getUserFromAccessToken()
         {
             string accessToken = Request.Headers["Authorization"];
             var user = await _authService.getUser(accessToken);
@@ -38,7 +37,7 @@ namespace Cloud_Storage.Controllers
 
         [HttpPost]
         [Route ("api/login")]
-        public async Task<ActionResult<Object>> login([FromBody]JObject body)
+        public async Task<ActionResult<User>> login([FromBody]JObject body)
         {           
             var client = _httpClientFactory.CreateClient("laravel");
             var res = await client.PostAsJsonAsync("api/login", body);
@@ -49,7 +48,7 @@ namespace Cloud_Storage.Controllers
 
         [HttpPost]
         [Route("api/register")]
-        public async Task<ActionResult<Object>> register([FromBody]JObject body)
+        public async Task<ActionResult<User>> register([FromBody]JObject body)
         {
             var client = _httpClientFactory.CreateClient("laravel");
             var res = await client.PostAsJsonAsync("api/register", body);

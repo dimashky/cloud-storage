@@ -60,6 +60,8 @@ namespace Cloud_Storage
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
 
+            //app.UseAuthMiddleware();
+
             app.UseMvc(routes =>
             {
                 routes.MapRoute(

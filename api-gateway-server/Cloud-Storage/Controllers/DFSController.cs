@@ -11,6 +11,7 @@ using Cloud_Storage.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using File = Cloud_Storage.Models.File;
 
 namespace Cloud_Storage.Controllers
 {
@@ -28,20 +29,19 @@ namespace Cloud_Storage.Controllers
 
         [Route("api/files")]
         [HttpGet]
-        public async Task<ActionResult<Object>> index()
+        public async Task<IEnumerable<File>> index()
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
-            if (user == null) return Unauthorized();
 
             var client = _httpClientFactory.CreateClient("DFS");
             var res = await client.GetAsync("files/"+user.id);
-            if (!res.IsSuccessStatusCode) return BadRequest();
-            return await res.Content.ReadAsAsync<Object>();
+            
+            return await res.Content.ReadAsAsync<IEnumerable<File>>();
         }
 
         [Route("api/files")]
         [HttpPost]
-        public async Task<ActionResult<Object>> upload([FromForm]FileRequestModel body)
+        public async Task<ActionResult<File>> upload([FromForm]UploadRequest body)
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
             if (user == null) return BadRequest();
@@ -56,12 +56,12 @@ namespace Cloud_Storage.Controllers
             multi.Add(new StringContent("" + body.parent_id), "parent_id");
             var res = await client.PostAsync("upload", multi);
             if (!res.IsSuccessStatusCode) return BadRequest();
-            return await res.Content.ReadAsAsync<Object>();
+            return await res.Content.ReadAsAsync<File>();
         }
 
         [HttpPost]
         [Route("api/folder")]
-        public async Task<ActionResult<Object>> createFolder([FromBody]JObject body)
+        public async Task<ActionResult> createFolder([FromBody]JObject body)
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
             if (user == null) return Unauthorized();
@@ -70,39 +70,31 @@ namespace Cloud_Storage.Controllers
             body.Add("owner_id", user.id);
             var res = await client.PostAsJsonAsync("create-folder", body);
             if (!res.IsSuccessStatusCode) return BadRequest();
-            return await res.Content.ReadAsAsync<Object>();
+            return Ok();
         }
 
         [HttpPut("{id}")]
         [Route("api/update-file/{id}")]
-        public async Task<ActionResult<Object>> update(int id, [FromBody]JObject body)
+        public async Task<ActionResult> update(int id, [FromBody]JObject body)
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
             if (user == null) return Unauthorized();
 
             var client = _httpClientFactory.CreateClient("DFS");
             var res = await client.PutAsJsonAsync("file/"+id, body);
-            return await res.Content.ReadAsAsync<Object>();
+            return Ok();
         }
 
         [HttpDelete("{id}")]
         [Route("api/delete-file/{id}")]
-        public async Task<ActionResult<Object>> delete(int id)
+        public async Task<ActionResult> delete(int id)
         {
             var user = await _authService.getUser(Request.Headers["Authorization"]);
             if (user == null) return Unauthorized();
 
             var client = _httpClientFactory.CreateClient("DFS");
             var res = await client.DeleteAsync("file/"+id);
-            return await res.Content.ReadAsAsync<Object>();
+            return Ok();
         }
-    }
-
-    public class FileRequestModel
-    {
-        public int owner_id { get; set; }
-        public int parent_id { get; set; }
-        public IFormFile file { get; set; }
-        public string name { get; set; }
     }
 }

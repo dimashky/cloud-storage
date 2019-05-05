@@ -5,12 +5,13 @@ from werkzeug.utils import secure_filename
 from models.File import File
 from models.Folder import Folder
 
+
 class FileRepository:
     def __init__(self):
         self.mydb = mysql.connector.connect(
             host="localhost",
             user="root",
-            passwd="root",
+            passwd="",
             database="cloud_storage_files"
         )
 
