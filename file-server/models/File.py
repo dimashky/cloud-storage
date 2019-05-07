@@ -14,7 +14,7 @@ class File(FileComponent):
         key = ""
         folder = [folder for folder in folders if folder.id == int(parentId)]
         if not len(folder):
-            return "//"
+            return ""
         folder = folder[0]
         key += self.getKey(folder.parent, folders)
         folder.key = key +  folder.name + "/"

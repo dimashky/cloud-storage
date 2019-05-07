@@ -15,7 +15,7 @@ class Folder(FileComponent):
         key = ""
         folder = [folder for folder in folders if folder.id == parentId]
         if not len(folder):
-            return "//"
+            return ""
         folder = folder[0]
         if(folder.key):
             return folder.key

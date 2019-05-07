@@ -152,16 +152,28 @@ export class Home extends Component {
 
     handleDeleteFileOrFolder = (fileKey) => {
         let files = this.state.files;
-        let idx = files.findIndex(e => e.key === fileKey);
+        let idx = files.findIndex(e => e.key === fileKey || e.key === '//'+fileKey);
         if(idx < 0){
-        	alert("Error");
+			alert("File not found");
+			console.log(fileKey, files);
         	return;
-        }
-        let file = files[idx];
+		}
+		let file = files[idx];
+		if(file.key[0] === "/" && file.key[1] === "/"){
+			fileKey = "//" + fileKey;
+		}
         FileManager.DeleteFolderOrFile(file.id)
 	        .then(() => {
-		        files.splice(idx, 1);
-		        this.setState({files: [...files]});
+				this.setState(state => {
+					const newFiles = []
+					state.files.map(f => {
+					  if (f.key.substr(0, fileKey.length) !== fileKey) {
+						newFiles.push(f)
+					  }
+					})
+					state.files = newFiles
+					return state
+				  })
 	        })
 	        .catch(err => {
 	        	alert(err.message);
