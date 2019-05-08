@@ -1,26 +1,27 @@
 import mysql.connector
-import os
+import os, io
 from datetime import datetime
 from werkzeug.utils import secure_filename
-from models.File import File
 from models.Folder import Folder
+from models.File import File
 
+db = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            passwd="root",
+            database="cloud_storage_files"
+        )
 
 class FileRepository:
     def __init__(self):
-        self.mydb = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            passwd="",
-            database="cloud_storage_files"
-        )
+        self.mydb = db
 
     def index(self, userId):
         mycursor = self.mydb.cursor()
         mycursor.execute("SELECT * FROM files WHERE owner_id = "+str(userId))
         rows = mycursor.fetchall()
-        folders = [Folder(*row) for row in rows if not row[len(row)-1]]
-        files = [File(*row, folders) for row in rows if row[len(row)-1]]
+        folders = [Folder(*row, self) for row in rows if not row[len(row)-1]]
+        files = [File(*row, folders, self) for row in rows if row[len(row)-1]]
         folders = [folder.setKey(folders) for folder in folders]
         return (files, folders)
 
@@ -35,12 +36,15 @@ class FileRepository:
 
     def upload(self, owner_id, file, parent_id):
         modified = datetime.now().isoformat()
-        size = len(file.read())
+        fileContent = file.read()
+        size = len(fileContent)
         parent = parent_id
         filename = secure_filename(file.filename)
-        path = os.path.join('./data/', filename)
+        path = os.path.join('./data/', secure_filename(modified + filename) )
 
-        file.save(path)
+        f = open(path, 'wb')
+        f.write(fileContent)
+
         mycursor = self.mydb.cursor()
         sql = "INSERT INTO files (owner_id, name, modified_at, size, parent_id, path) VALUES (%s, %s, %s, %s,%s,%s)"
         val = (owner_id, file.filename, modified, size, parent, path)
@@ -50,9 +54,7 @@ class FileRepository:
 
         mycursor.close()
         files, folders = self.index(owner_id)
-        print(folders)
-        print(parent_id)
-        return File(mycursor.lastrowid, filename, "", owner_id, modified, size, parent, path, folders).__dict__
+        return File(mycursor.lastrowid, filename, "", owner_id, modified, size, parent, path, folders, self).__dict__
 
     def createFolder(self, owner_id, folder_name, parent_id):
         modified = datetime.now().isoformat()
@@ -87,12 +89,21 @@ class FileRepository:
         return mycursor.rowcount
 
     def delete(self, file_id):
-
         mycursor = self.mydb.cursor()
+        mycursor.execute("SELECT * FROM files WHERE id = "+str(file_id))
+        rows = mycursor.fetchall()
+
+        if len(rows) == 0:
+            return 1
+
+        file_path = rows[0][7]
+        
         sql = "DELETE FROM files WHERE id = " + str(file_id)
         mycursor.execute(sql)
-
         self.mydb.commit()
-
         mycursor.close()
+
+        if file_path and os.path.isfile(file_path):
+            os.remove(file_path)
+
         return mycursor.rowcount

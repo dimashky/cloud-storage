@@ -24,7 +24,7 @@ export class Home extends Component {
         this.state = {
             files: [],
             loading: false,
-	          selectedItem: null
+			selectedItem: null
         }
     }
 
@@ -46,23 +46,30 @@ export class Home extends Component {
     }
 
     handleCreateFolder = (key) => {
-    	let name = key.split("/");
-    	name = name[name.length - 2];
-    	let parent_id = 0;
+    	let nameList = key.split("/");
+    	let name = nameList[nameList.length - 2];
+		let parent_id = 0;
+		console.log(key)
     	if(this.state.selectedItem){
     		parent_id = this.state.selectedItem.id
-	    }
+		}
+		if(nameList.length === 2){
+			parent_id = 0;
+		}
+		else{
+			let parentKey = key.slice(0, key.length-1-name.length);
+			console.log(parentKey)
+			let idx = this.state.files.findIndex(e => e.key === parentKey);
+			if(idx > -1)
+				parent_id = this.state.files[idx].id;
+			else
+				parent_id = 0;
+		}
 	    this.setState({loading: true});
 	    FileManager.createFolder(name, parent_id)
 		    .then((id) => {
 			    this.setState({loading: false});
-			    this.setState(state => {
-				    state.files = state.files.concat([{
-					    key,
-					    id
-				    }]);
-				    return state
-			    })
+			    this.getFolders();
 		    })
 		    .catch(err => {
 		    	alert(err.message);
@@ -81,10 +88,11 @@ export class Home extends Component {
 		     },
 		     preConfirm: file => {
 			     return new Promise(resolve => {
-				     let parent_id = this.state.selectedItem.id ? this.state.selectedItem.id : 0;
+					 let parent_id = this.state.selectedItem.id ? this.state.selectedItem.id : 0;
 				     FileManager.uploadFile(file, parent_id)
 					     .then((file) => {
 						     this.setState(state => {
+								 file.modified = +Moment()
 							     state.files = state.files.concat([file]);
 							     return state
 						     });
@@ -144,9 +152,7 @@ export class Home extends Component {
     }
 
     handleSelectFileOrFolder = (file) => {
-    	if(!file){
-    		return;
-	    }
+		console.log(file)
 	    this.setState({selectedItem: file});
     }
 
@@ -162,8 +168,10 @@ export class Home extends Component {
 		if(file.key[0] === "/" && file.key[1] === "/"){
 			fileKey = "//" + fileKey;
 		}
+		this.setState({loading: true});
         FileManager.DeleteFolderOrFile(file.id)
 	        .then(() => {
+				this.setState({loading: false});
 				this.setState(state => {
 					const newFiles = []
 					state.files.map(f => {
@@ -176,6 +184,7 @@ export class Home extends Component {
 				  })
 	        })
 	        .catch(err => {
+				this.setState({loading: false});
 	        	alert(err.message);
 	        })
     }
@@ -194,24 +203,26 @@ export class Home extends Component {
 
         return (
             <Grid container spacing={16} style={{marginTop: 40}}>
-                <Grid item xs={3} style={{borderRight: "1px solid grey"}}>
-	                <List component="nav">
-                      <ListItem button>
-			                <ListItemIcon>
-				                <Folder />
-			                </ListItemIcon>
-			                <ListItemText primary="My Folder" />
-		                </ListItem>
-		                <Divider/>
-		                <ListItem button>
-			                <ListItemIcon>
-				                <FolderShared />
-			                </ListItemIcon>
-			                <ListItemText primary="Shared with Me" />
-		                </ListItem>
-	                </List>
-                </Grid>
-                <Grid item xs={9}>
+				{false && 
+				<Grid item xs={3} style={{borderRight: "1px solid grey"}}>
+					<List component="nav">
+					<ListItem button>
+							<ListItemIcon>
+								<Folder />
+							</ListItemIcon>
+							<ListItemText primary="My Folder" />
+						</ListItem>
+						<Divider/>
+						<ListItem button>
+							<ListItemIcon>
+								<FolderShared />
+							</ListItemIcon>
+							<ListItemText primary="Shared with Me" />
+						</ListItem>
+					</List>
+				</Grid>
+				}
+                <Grid item xs={12}>
 	                <div className="file-browser-container">
 		                {loading && (
 			                <div style={{padding: 16}}>
@@ -233,7 +244,9 @@ export class Home extends Component {
 					                Loading: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
 				                }}
 				                detailRenderer={(e)=><span>{e.name}</span>}
-				                onSelect={this.handleSelectFileOrFolder}
+								onSelectFile={this.handleSelectFileOrFolder}
+								onFolderOpen={this.handleSelectFileOrFolder}
+								onFolderClose={() => this.handleSelectFileOrFolder(null)}
 				                onCreateFolder={this.handleCreateFolder}
 				                onCreateFiles={this.handleCreateFiles}
 				                onMoveFolder={this.handleRenameFolder}
