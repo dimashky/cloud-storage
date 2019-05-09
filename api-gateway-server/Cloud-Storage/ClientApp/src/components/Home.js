@@ -113,7 +113,26 @@ export class Home extends Component {
 	     });
     }
 
-    handleRenameFolder = (oldKey, newKey) => {
+    handleRenameFolder = async (oldKey, newKey) => {
+		let idx = this.state.files.findIndex(e => e.key === oldKey);
+		let fileId = this.state.files[idx].id;
+    	let nameList = newKey.split("/");
+		let name = nameList[nameList.length - 2], parent_id;
+		if(nameList.length === 2){
+			parent_id = "NULL";
+		}
+		else{
+			let parentKey = newKey.slice(0, newKey.length-1-name.length);
+			console.log(parentKey)
+			let idx = this.state.files.findIndex(e => e.key === parentKey);
+			if(idx > -1)
+				parent_id = this.state.files[idx].id;
+			else
+				parent_id = "NULL";
+		}
+		this.setState({loading: true});
+		await FileManager.EditFolderOrFile(fileId, name, parent_id);
+		this.setState({loading: false});
         this.setState(state => {
             const newFiles = []
             state.files.map((file) => {
@@ -132,7 +151,26 @@ export class Home extends Component {
         })
     }
 
-    handleRenameFile = (oldKey, newKey) => {
+    handleRenameFile = async(oldKey, newKey) => {
+		let idx = this.state.files.findIndex(e => e.key === oldKey);
+		let fileId = this.state.files[idx].id;
+    	let nameList = newKey.split("/");
+		let name = nameList[nameList.length - 1], parent_id;
+		if(nameList.length === 1){
+			parent_id = "NULL";
+		}
+		else{
+			let parentKey = newKey.slice(0, newKey.length-name.length);
+			console.log(parentKey)
+			let idx = this.state.files.findIndex(e => e.key === parentKey);
+			if(idx > -1)
+				parent_id = this.state.files[idx].id;
+			else
+				parent_id = "NULL";
+		}
+		this.setState({loading: true});
+		await FileManager.EditFolderOrFile(fileId, name, parent_id);
+		this.setState({loading: false});
         this.setState(state => {
             const newFiles = []
             state.files.map((file) => {

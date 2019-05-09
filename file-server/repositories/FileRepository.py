@@ -74,7 +74,7 @@ class FileRepository:
         modified = datetime.now().isoformat()
         SET = "SET modified_at='" + modified + "'"
         if(folder_id):
-            SET += ", parent_id='" + str(folder_id) + "'"
+            SET += ", parent_id=" + str(folder_id)
 
         if(filename):
             SET += ", name='" + str(filename) + "'"
