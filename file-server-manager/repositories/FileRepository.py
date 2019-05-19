@@ -40,20 +40,16 @@ class FileRepository:
 
 
 
-    def upload(self, owner_id, file, parent_id):        
+    def upload(self, owner_id, file_name, file_size, parent_id, nodes):
         modified = datetime.now().isoformat()
-        fileContent = file.read()
-        size = len(fileContent)
+        size = file_size
         parent = parent_id
-        filename = secure_filename(file.filename)
-        path = os.path.join('./data/', secure_filename(modified + filename) )
-
-        f = open(path, 'wb')
-        f.write(fileContent)
+        filename = file_name
+        path = nodes
 
         mycursor = self.mydb.cursor()
         sql = "INSERT INTO files (owner_id, name, modified_at, size, parent_id, path) VALUES (%s, %s, %s, %s,%s,%s)"
-        val = (owner_id, file.filename, modified, size, parent, path)
+        val = (owner_id, filename, modified, size, parent, path)
         mycursor.execute(sql, val)
 
         self.mydb.commit()

@@ -12,32 +12,29 @@ class MinionsConnector:
 			self.minions[id] = (host, int(port))
 	
 	def sortMinionsByTrafficLoad(self, includes = []):
-		minions = {}
+		minions = []
 		for id, (host, port) in self.minions.items():
-			if(len(includes) > 0 and id not in includes):
-				continue
 			try:
+				if(len(includes) > 0 and (host,port) not in includes):
+					continue
 				conn =  rpyc.connect(host, port=port)
 				load = conn.root.loadness()
 				conn.close()
-				minions[id] = load
+				minions.append((host, port, load))
 			except:
 				print("Error with minion => %s %d" % (host, port))
-		minions = collections.OrderedDict(sorted(minions.items(), key=lambda kv: kv[1]))
-		return minions
+		return sorted(minions, key=lambda kv: kv[1][2])
 
 	def sortMinionsByStorageSize(self, includes = []):
-		minions = {}
+		minions = []
 		for id, (host, port) in self.minions.items():
-			if(len(includes) > 0 and id not in includes):
-				continue
 			try:
+				if(len(includes) > 0 and (host,port) not in includes):
+					continue
 				conn =  rpyc.connect(host, port=port)
 				storage = conn.root.storage()
 				conn.close()
-				minions[id] = storage
+				minions.append((host, port, storage))
 			except:
 				print("Error with minion => %s %d" % (host, port))
-		minions = collections.OrderedDict(sorted(minions.items(), key=lambda kv: kv[1]))
-		return minions
-	
+		return sorted(minions, key=lambda kv: kv[1][2])	

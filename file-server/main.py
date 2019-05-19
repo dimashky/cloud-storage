@@ -1,13 +1,18 @@
-import rpyc, os, argparse
+import rpyc, os, argparse, json
 from threading import Thread
 from rpyc.utils.server import ThreadedServer
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
+from datetime import datetime
+from werkzeug.utils import secure_filename
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--port", required = True, help = "port")
 args = vars(ap.parse_args())
 
 api = Flask(__name__)
+
+COORDINATOR_HOSTNAME = "localhost"
+COORDINATOR_PORT = 5001
 
 class FileService(rpyc.Service):
 	connected_devices = 0
@@ -79,6 +84,30 @@ def downloadFile (id):
 	if os.path.isfile(path):
 	    return send_file(path, as_attachment=True)
 	return "Not Found", 404
+
+@api.route("/upload", methods=["POST"])
+def uploadFile():
+	file = request.files['file']
+	parent_id = request.form.get('parent_id')
+	access_token = request.form.get('access_token')
+ 
+	if file.filename == '':
+		raise Exception('No selected file')
+    
+	if file:
+		port = int(args["port"])
+		fileContent = file.read()
+		size = len(fileContent)
+		parent = parent_id
+		filename = secure_filename(file.filename)
+		conn = rpyc.connect(COORDINATOR_HOSTNAME, port=COORDINATOR_PORT)
+		res = conn.root.uploading("localhost", port, access_token, filename, size, parent_id)
+		id = res["file"]["id"]
+		filename = str(id)
+		path = os.path.join('storage', filename)
+		f = open(path, 'wb')
+		f.write(fileContent)
+		return jsonify(res["file"]["id"])
 
 def runFlask(port):
 	global api
