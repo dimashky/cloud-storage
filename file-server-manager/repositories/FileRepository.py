@@ -1,9 +1,12 @@
-import mysql.connector
-import os, io
+import mysql.connector, os, io, rpyc, configparser
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from models.Folder import Folder
 from models.File import File
+from models.MinionsConnector import MinionsConnector
+
+parser = configparser.ConfigParser()
+parser.read('config.ini')
 
 db = mysql.connector.connect(
             host="localhost",
@@ -15,6 +18,7 @@ db = mysql.connector.connect(
 class FileRepository:
     def __init__(self):
         self.mydb = db
+        self.minionsConnector = MinionsConnector()
 
     def index(self, userId):
         mycursor = self.mydb.cursor()
@@ -34,7 +38,9 @@ class FileRepository:
         mycursor.close()
         return rows
 
-    def upload(self, owner_id, file, parent_id):
+
+
+    def upload(self, owner_id, file, parent_id):        
         modified = datetime.now().isoformat()
         fileContent = file.read()
         size = len(fileContent)
