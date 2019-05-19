@@ -82,18 +82,25 @@ class FileService(rpyc.Service):
 				total_size += os.path.getsize(fp)
 		return total_size
 
-@api.route('/download/<id>')
-def downloadFile (id):
-	path = os.path.join(storage_directory, id)
-	if os.path.isfile(path):
-	    return send_file(path, as_attachment=True)
-	return "Not Found", 404
+@api.route('/download/<fileId>')
+def downloadFile (fileId):
+	access_token = request.headers.get("Authorization")
+	conn = rpyc.connect(COORDINATOR_HOSTNAME, port=COORDINATOR_PORT)
+	res = conn.root.canDownload(access_token, fileId)
+	conn.close()
+	if not res:
+		return "Cannot download this file", 400
+	path = os.path.join(storage_directory, fileId)
+	if not os.path.isfile(path):
+		return "Not Found", 404
+
+	return send_file(path, as_attachment=True, attachment_filename="test.pdf")
 
 @api.route("/upload", methods=["POST"])
 def uploadFile():
 	file = request.files['file']
 	parent_id = request.form.get('parent_id')
-	access_token = request.form.get('access_token')
+	access_token = request.headers.get("Authorization")
  
 	if file.filename == '':
 		raise Exception('No selected file')
@@ -105,6 +112,10 @@ def uploadFile():
 		filename = secure_filename(file.filename)
 		conn = rpyc.connect(COORDINATOR_HOSTNAME, port=COORDINATOR_PORT)
 		res = conn.root.uploading("localhost", port, access_token, filename, size, parent_id)
+
+		if not res:
+			return "Cannot upload to this server", 400
+
 		id = res["file"]["id"]
 		filename = str(id)
 		path = os.path.join(storage_directory, filename)
@@ -115,12 +126,13 @@ def uploadFile():
 			conn = rpyc.connect(host, port=port)
 			conn.root.store(fileContent, id)
 			conn.close()
+		print(type(res["file"]))
 		return jsonify(res["file"]["id"])
 
 def runFlask(port):
 	global api
 	print("====> RUNNING FLASK <====")
-	api.run(port=port, debug=False, use_reloader=False)
+	api.run(port=port, debug=True, use_reloader=False)
 
 def runRPC(port):
 	server = ThreadedServer(FileService, port = port)

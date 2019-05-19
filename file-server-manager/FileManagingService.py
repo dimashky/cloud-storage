@@ -1,4 +1,4 @@
-import rpyc, argparse
+import rpyc, argparse, requests
 from rpyc.utils.server import ThreadedServer
 from repositories.FileRepository import FileRepository
 from models.MinionsConnector import MinionsConnector
@@ -8,12 +8,26 @@ class FileManagingService(rpyc.Service):
 	fileRepository = FileRepository()
  
 	def exposed_checkAuth(self, access_token):
-		return 1
+		try:
+			headers = {"Accept":"application/json","Authorization": access_token}
+			res = requests.get("http://localhost:8000/api/user", headers=headers)
+			if(res.status_code != 200):
+				return False
+			return res.json()["id"]
+		except:
+			return False
+
+	def exposed_canDownload(self, access_token, fileId):
+		user_id = self.exposed_checkAuth(access_token)
+		if not user_id:
+			return False
+		return FileManagingService.fileRepository.canAccessFile(user_id, fileId)
 
 	def exposed_uploading(self, node_host, node_port, access_token, file_name, file_size, parent_id):
 		owner_id = self.exposed_checkAuth(access_token)
+		if not owner_id:
+			return False
 		nodes = FileManagingService.minionsConnector.sortMinionsByStorageSize([(node_host, node_port)])
-		print(nodes)
 		paths = "%s:%d"%(node_host,node_port)
 		for h,p in nodes:
 			paths += ",%s:%d"%(h,p)

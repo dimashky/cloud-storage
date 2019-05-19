@@ -42,6 +42,8 @@ def uploadLink():
 @app.route("/download/<fileId>")
 def downloadLink(fileId):
     minions = fileRepo.getFilePath(fileId)
+    if not minions:
+        return "Not Found", 404
     avaliable_minions = minionsConnector.sortMinionsByTrafficLoad()
     minions = [x for x in avaliable_minions if x in minions]
     if(len(minions) == 0):
