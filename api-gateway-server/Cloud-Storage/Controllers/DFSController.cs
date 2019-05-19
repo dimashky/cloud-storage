@@ -39,6 +39,24 @@ namespace Cloud_Storage.Controllers
             return await res.Content.ReadAsAsync<IEnumerable<File>>();
         }
 
+        [Route("api/upload-link")]
+        [HttpGet]
+        public async Task<ActionResult<String>> uploadLink()
+        {
+            var client = _httpClientFactory.CreateClient("DFS");
+            var res = await client.GetAsync("upload-link");
+
+            return await res.Content.ReadAsStringAsync();
+        }
+
+        [Route("api/download/{id}")]
+        [HttpGet]
+        public ActionResult download(string id)
+        {
+            return Redirect("http://127.0.0.1:5000/download/" + (id));
+        }
+
+  
         [Route("api/files")]
         [HttpPost]
         public async Task<ActionResult<File>> upload([FromForm]UploadRequest body)
