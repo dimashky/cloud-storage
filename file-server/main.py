@@ -14,6 +14,11 @@ api = Flask(__name__)
 COORDINATOR_HOSTNAME = "localhost"
 COORDINATOR_PORT = 5001
 
+storage_directory = "storage%s"%args["port"]
+
+if not os.path.exists(storage_directory):
+    os.makedirs(storage_directory)
+
 class FileService(rpyc.Service):
 	connected_devices = 0
 	def on_connect(self, conn ):
@@ -28,13 +33,12 @@ class FileService(rpyc.Service):
 		return FileService.connected_devices
 
 	def exposed_storage(self):
-		return FileService.getSize("./storage")	
+		return FileService.getSize(storage_directory)	
 
-	def exposed_store(self, file, id):
+	def exposed_store(self, fileContent, id):
 		try:
-			fileContent = file.read()
 			filename = str(id)
-			path = os.path.join('storage', filename)
+			path = os.path.join(storage_directory, filename)
 
 			f = open(path, 'wb')
 			f.write(fileContent)
@@ -44,7 +48,7 @@ class FileService(rpyc.Service):
 
 	def exposed_delete(self, id):
 		try:
-			file_path = os.path.join('storage', id)
+			file_path = os.path.join(storage_directory, id)
 			if os.path.isfile(file_path):
 				os.remove(file_path)
 			return True
@@ -53,7 +57,7 @@ class FileService(rpyc.Service):
 	
 	def exposed_read(self, id):
 		try:
-			file_path = os.path.join('storage', id)
+			file_path = os.path.join(storage_directory, id)
 			if os.path.isfile(file_path):
 				return open(file_path, "rb").read()
 			return False
@@ -62,7 +66,7 @@ class FileService(rpyc.Service):
 	
 	def exposed_existed(self, id):
 		try:
-			file_path = os.path.join('storage', id)
+			file_path = os.path.join(storage_directory, id)
 			if os.path.isfile(file_path):
 				return True
 			return False
@@ -80,7 +84,7 @@ class FileService(rpyc.Service):
 
 @api.route('/download/<id>')
 def downloadFile (id):
-	path = os.path.join('storage', id)
+	path = os.path.join(storage_directory, id)
 	if os.path.isfile(path):
 	    return send_file(path, as_attachment=True)
 	return "Not Found", 404
@@ -103,13 +107,13 @@ def uploadFile():
 		res = conn.root.uploading("localhost", port, access_token, filename, size, parent_id)
 		id = res["file"]["id"]
 		filename = str(id)
-		path = os.path.join('storage', filename)
+		path = os.path.join(storage_directory, filename)
 		f = open(path, 'wb')
 		f.write(fileContent)
 		nodes = res["nodes"]
 		for host,port in nodes:
 			conn = rpyc.connect(host, port=port)
-			conn.root.store(file, id)
+			conn.root.store(fileContent, id)
 			conn.close()
 		return jsonify(res["file"]["id"])
 
