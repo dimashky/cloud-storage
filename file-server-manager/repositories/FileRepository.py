@@ -3,7 +3,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from models.Folder import Folder
 from models.File import File
-from models.MinionsConnector import MinionsConnector
+
 
 parser = configparser.ConfigParser()
 parser.read('config.ini')
@@ -18,7 +18,6 @@ db = mysql.connector.connect(
 class FileRepository:
     def __init__(self):
         self.mydb = db
-        self.minionsConnector = MinionsConnector()
 
     def index(self, userId):
         mycursor = self.mydb.cursor()
@@ -38,8 +37,26 @@ class FileRepository:
         mycursor.close()
         return rows
 
+    def getFilePath(self, fileId):
+        mycursor = self.mydb.cursor()
+        mycursor.execute('''
+            SELECT * FROM files
+            WHERE id = '''+str(fileId))
+        rows = mycursor.fetchall()
+        mycursor.close()
 
-
+        if(len(rows) != 1):
+            return None
+        
+        paths = rows[0][len(rows[0])-1]
+        slaves =  paths.split(",")
+        minions = []
+        for m in slaves:
+            host, port = m.split(":")
+            minions.append((host, int(port)))    
+        return minions
+    
+    
     def upload(self, owner_id, file_name, file_size, parent_id, nodes):
         modified = datetime.now().isoformat()
         size = file_size

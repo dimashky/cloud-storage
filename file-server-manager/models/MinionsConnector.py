@@ -23,13 +23,14 @@ class MinionsConnector:
 				minions.append((host, port, load))
 			except:
 				print("Error with minion => %s %d" % (host, port))
-		return sorted(minions, key=lambda kv: kv[1][2])
+		minions = sorted(minions, key=lambda kv: kv[2])
+		return [(h,p) for h,p,s in minions]
 
 	def sortMinionsByStorageSize(self, includes = []):
 		minions = []
 		for id, (host, port) in self.minions.items():
 			try:
-				if(len(includes) > 0 and (host,port) not in includes):
+				if(len(includes) > 0 and (host,port) in includes):
 					continue
 				conn =  rpyc.connect(host, port=port)
 				storage = conn.root.storage()
@@ -37,4 +38,5 @@ class MinionsConnector:
 				minions.append((host, port, storage))
 			except:
 				print("Error with minion => %s %d" % (host, port))
-		return sorted(minions, key=lambda kv: kv[1][2])	
+		minions = sorted(minions, key=lambda kv: kv[2])	
+		return [(h,p) for h,p,s in minions]

@@ -12,8 +12,12 @@ class FileManagingService(rpyc.Service):
 
 	def exposed_uploading(self, node_host, node_port, access_token, file_name, file_size, parent_id):
 		owner_id = self.exposed_checkAuth(access_token)
-		nodes = FileManagingService.minionsConnector.sortMinionsByStorageSize((node_host, node_port))
-		file = FileManagingService.fileRepository.upload(owner_id, file_name, file_size, parent_id, "%s:%d"%(node_host,node_port))
+		nodes = FileManagingService.minionsConnector.sortMinionsByStorageSize([(node_host, node_port)])
+		print(nodes)
+		paths = "%s:%d"%(node_host,node_port)
+		for h,p in nodes:
+			paths += ",%s:%d"%(h,p)
+		file = FileManagingService.fileRepository.upload(owner_id, file_name, file_size, parent_id, paths)
 		return {
 			"nodes": nodes[:2],
 			"file": file

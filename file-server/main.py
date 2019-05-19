@@ -98,7 +98,6 @@ def uploadFile():
 		port = int(args["port"])
 		fileContent = file.read()
 		size = len(fileContent)
-		parent = parent_id
 		filename = secure_filename(file.filename)
 		conn = rpyc.connect(COORDINATOR_HOSTNAME, port=COORDINATOR_PORT)
 		res = conn.root.uploading("localhost", port, access_token, filename, size, parent_id)
@@ -107,12 +106,17 @@ def uploadFile():
 		path = os.path.join('storage', filename)
 		f = open(path, 'wb')
 		f.write(fileContent)
+		nodes = res["nodes"]
+		for host,port in nodes:
+			conn = rpyc.connect(host, port=port)
+			conn.root.store(file, id)
+			conn.close()
 		return jsonify(res["file"]["id"])
 
 def runFlask(port):
 	global api
 	print("====> RUNNING FLASK <====")
-	api.run(port=port+1, debug=False, use_reloader=False)
+	api.run(port=port, debug=False, use_reloader=False)
 
 def runRPC(port):
 	server = ThreadedServer(FileService, port = port)

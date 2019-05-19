@@ -1,10 +1,12 @@
-from flask import Flask, request
+from flask import Flask, request, redirect
 from repositories.FileRepository import FileRepository
 from flask import jsonify
+from models.MinionsConnector import MinionsConnector
 
 app = Flask(__name__)
 
 fileRepo = FileRepository()
+minionsConnector = MinionsConnector()
 
 UPLOAD_FOLDER = './data/'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
@@ -30,6 +32,21 @@ def index(user_id):
 def shared(user_id):
     return jsonify(fileRepo.shared(user_id))
 
+@app.route("/upload-link")
+def uploadLink():
+    minions = minionsConnector.sortMinionsByStorageSize()
+    if(len(minions) == 0):
+        return ""
+    return "http://%s:%d/upload"%(minions[0][0], minions[0][1])
+
+@app.route("/download/<fileId>")
+def downloadLink(fileId):
+    minions = fileRepo.getFilePath(fileId)
+    avaliable_minions = minionsConnector.sortMinionsByTrafficLoad()
+    minions = [x for x in avaliable_minions if x in minions]
+    if(len(minions) == 0):
+        return ""
+    return redirect("http://%s:%d/download/%s"%(minions[0][0], minions[0][1]+1, fileId))
 
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -66,4 +83,4 @@ def delete(file_id):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
