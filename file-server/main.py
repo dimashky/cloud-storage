@@ -4,12 +4,14 @@ from rpyc.utils.server import ThreadedServer
 from flask import Flask, request, send_file, jsonify
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from flask_cors import CORS
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--port", required = True, help = "port")
 args = vars(ap.parse_args())
 
 api = Flask(__name__)
+CORS(api, expose_headers=["x-suggested-filename"])
 
 COORDINATOR_HOSTNAME = "localhost"
 COORDINATOR_PORT = 5001
@@ -85,7 +87,7 @@ class FileService(rpyc.Service):
 @api.route('/download/<fileId>')
 def downloadFile (fileId):
 	access_token = request.headers.get("Authorization")
-	conn = rpyc.connect(COORDINATOR_HOSTNAME, port=COORDINATOR_PORT)
+	conn = rpyc.connect(COORDINATOR_HOSTNAME, port=COORDINATOR_PORT, config={"allow_all_attrs": True})
 	res = conn.root.canDownload(access_token, fileId)
 	conn.close()
 	if not res:
@@ -95,6 +97,7 @@ def downloadFile (fileId):
 		return "Not Found", 404
 	result = send_file(path, as_attachment=True, attachment_filename="test.pdf")
 	result.headers["Content-Disposition"] = 'attachment; filename*=%s' % res
+	result.headers["x-suggested-filename"] = res
 	return result
 
 
@@ -112,7 +115,7 @@ def uploadFile():
 		fileContent = file.read()
 		size = len(fileContent)
 		filename = secure_filename(file.filename)
-		conn = rpyc.connect(COORDINATOR_HOSTNAME, port=COORDINATOR_PORT)
+		conn = rpyc.connect(COORDINATOR_HOSTNAME, port=COORDINATOR_PORT, config={"allow_all_attrs": True})
 		res = conn.root.uploading("localhost", port, access_token, filename, size, parent_id)
 
 		if not res:
@@ -136,7 +139,7 @@ def runFlask(port):
 	api.run(port=port, debug=True, use_reloader=False)
 
 def runRPC(port):
-	server = ThreadedServer(FileService, port = port)
+	server = ThreadedServer(FileService, port = port, protocol_config = {"allow_public_attrs" : True})
 	server.start()
 
 if __name__ == "__main__":

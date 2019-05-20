@@ -41,5 +41,5 @@ class FileManagingService(rpyc.Service):
 		
 
 if __name__ == "__main__":
-	server = ThreadedServer(FileManagingService, port = 5001)
+	server = ThreadedServer(FileManagingService, port = 5001, protocol_config = {"allow_public_attrs" : True})
 	server.start()
