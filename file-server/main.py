@@ -93,8 +93,10 @@ def downloadFile (fileId):
 	path = os.path.join(storage_directory, fileId)
 	if not os.path.isfile(path):
 		return "Not Found", 404
+	result = send_file(path, as_attachment=True, attachment_filename="test.pdf")
+	result.headers["Content-Disposition"] = 'attachment; filename*=%s' % res
+	return result
 
-	return send_file(path, as_attachment=True, attachment_filename="test.pdf")
 
 @api.route("/upload", methods=["POST"])
 def uploadFile():
@@ -126,8 +128,7 @@ def uploadFile():
 			conn = rpyc.connect(host, port=port)
 			conn.root.store(fileContent, id)
 			conn.close()
-		print(type(res["file"]))
-		return jsonify(res["file"]["id"])
+		return jsonify(res["file"])
 
 def runFlask(port):
 	global api

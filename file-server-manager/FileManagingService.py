@@ -12,9 +12,11 @@ class FileManagingService(rpyc.Service):
 			headers = {"Accept":"application/json","Authorization": access_token}
 			res = requests.get("http://localhost:8000/api/user", headers=headers)
 			if(res.status_code != 200):
+				print("checkAuth => unAuth %d"%res.status_code)
 				return False
 			return res.json()["id"]
 		except:
+			print("checkAuth => Exception")
 			return False
 
 	def exposed_canDownload(self, access_token, fileId):

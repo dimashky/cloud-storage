@@ -30,12 +30,12 @@ class FileRepository:
 
     def canAccessFile(self, userId, fileId):
         mycursor = self.mydb.cursor()
-        mycursor.execute("SELECT * FROM files WHERE owner_id = %d AND id = %d"%(userId, fileId))
+        mycursor.execute("SELECT * FROM files WHERE owner_id = %d AND id = %d"%(int(userId), int(fileId)))
         rows = mycursor.fetchall()
         mycursor.close()
         if(len(rows) == 0):
             return False
-        return True
+        return rows[0][1]
         
     def shared(self, userId):
         mycursor = self.mydb.cursor()
