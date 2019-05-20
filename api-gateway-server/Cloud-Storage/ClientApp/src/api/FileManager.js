@@ -1,5 +1,6 @@
 ﻿import $http from './$http';
 import Moment from 'moment';
+import FileSaver from 'file-saver';
 
 class FileManager {
     static async getFiles() {
@@ -11,10 +12,14 @@ class FileManager {
     }
 
 	static async uploadFile(file, parent_id) {
+    const uploadLink = (await $http.get("upload-link")).data;
+    if(!uploadLink){
+    	throw Error("No Available Servers")
+    }
 		let data = new FormData();
 		data.append("file", file);
 		data.append("parent_id", parent_id);
-		return (await $http.post("files", data)).data;
+		return (await $http.post(uploadLink, data)).data;
 	}
 
 	static async createFolder(name, parent_id) {
@@ -27,6 +32,16 @@ class FileManager {
 
 	static async EditFolderOrFile(id, name, parent_id) {
 		return (await $http.put("update-file/"+id, {name, parent_id})).data
+	}
+
+	static async download(id) {
+    const options = {
+	    responseType: "arraybuffer"
+    };
+		let response = (await $http.get("download/"+id, options));
+		let filename = response.headers["x-suggested-filename"];
+		const blob = new Blob([response.data]);
+		FileSaver.saveAs(blob, filename);
 	}
 }
 

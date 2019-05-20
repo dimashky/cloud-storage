@@ -2,8 +2,10 @@ from flask import Flask, request, redirect
 from repositories.FileRepository import FileRepository
 from flask import jsonify
 from models.MinionsConnector import MinionsConnector
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 fileRepo = FileRepository()
 minionsConnector = MinionsConnector()
@@ -37,7 +39,7 @@ def uploadLink():
     minions = minionsConnector.sortMinionsByStorageSize()
     if(len(minions) == 0):
         return ""
-    return "http://%s:%d/upload"%(minions[0][0], minions[0][1])
+    return "http://%s:%d/upload"%(minions[0][0], minions[0][1]+1)
 
 @app.route("/download/<fileId>")
 def downloadLink(fileId):
@@ -49,16 +51,6 @@ def downloadLink(fileId):
     if(len(minions) == 0):
         return ""
     return redirect("http://%s:%d/download/%s"%(minions[0][0], minions[0][1]+1, fileId))
-
-@app.route("/upload", methods=["POST"])
-def upload():
-    file = request.files['file']
-    parent_id = request.form.get('parent_id')
-    owner_id = request.form.get('owner_id')
-    if file.filename == '':
-        raise Exception('No selected file')
-    if file:
-        return jsonify(fileRepo.upload(owner_id, file, parent_id))
 
 @app.route("/create-folder", methods=["POST"])
 def createFolder():

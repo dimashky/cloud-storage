@@ -15,6 +15,12 @@ import Folder from '@material-ui/icons/Folder';
 import { Menu, Item, IconFont, MenuProvider } from 'react-contexify';
 import 'react-contexify/dist/ReactContexify.min.css';
 import Swal from 'sweetalert2';
+import Button from '@material-ui/core/Button';
+import Fab from '@material-ui/core/Fab';
+import AddIcon from '@material-ui/icons/Add';
+import Icon from '@material-ui/core/Icon';
+import CloudUpload from '@material-ui/icons/CloudUpload';
+import CloudDownload from '@material-ui/icons/CloudDownload';
 
 export class Home extends Component {
     static displayName = Home.name;
@@ -24,7 +30,8 @@ export class Home extends Component {
         this.state = {
             files: [],
             loading: false,
-			selectedItem: null
+						selectedFolder: null,
+		        selectedFile: null
         }
     }
 
@@ -48,23 +55,22 @@ export class Home extends Component {
     handleCreateFolder = (key) => {
     	let nameList = key.split("/");
     	let name = nameList[nameList.length - 2];
-		let parent_id = 0;
-		console.log(key)
-    	if(this.state.selectedItem){
-    		parent_id = this.state.selectedItem.id
-		}
-		if(nameList.length === 2){
-			parent_id = 0;
-		}
-		else{
-			let parentKey = key.slice(0, key.length-1-name.length);
-			console.log(parentKey)
-			let idx = this.state.files.findIndex(e => e.key === parentKey);
-			if(idx > -1)
-				parent_id = this.state.files[idx].id;
-			else
+			let parent_id = 0;
+    	if(this.state.selectedFolder){
+	        parent_id = this.state.selectedFolder.id
+			}
+			if(nameList.length === 2){
 				parent_id = 0;
-		}
+			}
+			else{
+				let parentKey = key.slice(0, key.length-1-name.length);
+				console.log(parentKey)
+				let idx = this.state.files.findIndex(e => e.key === parentKey);
+				if(idx > -1)
+					parent_id = this.state.files[idx].id;
+				else
+					parent_id = 0;
+			}
 	    this.setState({loading: true});
 	    FileManager.createFolder(name, parent_id)
 		    .then((id) => {
@@ -88,7 +94,7 @@ export class Home extends Component {
 		     },
 		     preConfirm: file => {
 			     return new Promise(resolve => {
-					 let parent_id = this.state.selectedItem.id ? this.state.selectedItem.id : 0;
+					 let parent_id = this.state.selectedFolder.id ? this.state.selectedFolder.id : 0;
 				     FileManager.uploadFile(file, parent_id)
 					     .then((file) => {
 						     this.setState(state => {
@@ -189,19 +195,24 @@ export class Home extends Component {
         })
     }
 
-    handleSelectFileOrFolder = (file) => {
-		console.log(file)
-	    this.setState({selectedItem: file});
+    handleSelectFile = (file) => {
+			console.log("selected file", file);
+	    this.setState({selectedFile: file});
     }
+
+		handleSelectFolder = (folder) => {
+			console.log("selected folder", folder);
+			this.setState({selectedFolder: folder, selectedFile: null});
+		}
 
     handleDeleteFileOrFolder = (fileKey) => {
         let files = this.state.files;
         let idx = files.findIndex(e => e.key === fileKey || e.key === '//'+fileKey);
         if(idx < 0){
-			alert("File not found");
-			console.log(fileKey, files);
-        	return;
-		}
+				alert("File not found");
+				console.log(fileKey, files);
+	          return;
+			}
 		let file = files[idx];
 		if(file.key[0] === "/" && file.key[1] === "/"){
 			fileKey = "//" + fileKey;
@@ -227,12 +238,14 @@ export class Home extends Component {
 	        })
     }
 
-	onClick = ({ event, props }) => console.log(event,props);
+  download= () => {
+	  FileManager.download(this.state.selectedFile.id)
+		  .catch(err => alert(err.message));
+  }
 
 	renderContextMenu = () => (
 		<Menu id='menu_id'>
-			{this.state.selectedItem && this.state.selectedItem.path && <Item onClick={this.onClick}><IconFont className="fas fa-download"/>Download</Item>}
-			{this.state.selectedItem && !this.state.selectedItem.path && <Item onClick={this.handleCreateFiles}><IconFont className="fas fa-upload"/>Upload</Item>}
+			{this.state.selectedFolder && !this.state.selectedFolder.path && <Item onClick={this.handleCreateFiles}><IconFont className="fas fa-upload"/>Upload</Item>}
 		</Menu>
 	);
 
@@ -241,7 +254,7 @@ export class Home extends Component {
 
         return (
             <Grid container spacing={16} style={{marginTop: 40}}>
-				{false && 
+				{false &&
 				<Grid item xs={3} style={{borderRight: "1px solid grey"}}>
 					<List component="nav">
 					<ListItem button>
@@ -282,9 +295,10 @@ export class Home extends Component {
 					                Loading: <i className="fas fa-sync fa-spin" aria-hidden="true" />,
 				                }}
 				                detailRenderer={(e)=><span>{e.name}</span>}
-								onSelectFile={this.handleSelectFileOrFolder}
-								onFolderOpen={this.handleSelectFileOrFolder}
-								onFolderClose={() => this.handleSelectFileOrFolder(null)}
+												onSelectFile={this.handleSelectFile}
+				                onSelectFolder={this.handleSelectFolder}
+												onFolderOpen={this.handleSelectFolder}
+												onFolderClose={() => this.handleSelectFolder(null)}
 				                onCreateFolder={this.handleCreateFolder}
 				                onCreateFiles={this.handleCreateFiles}
 				                onMoveFolder={this.handleRenameFolder}
@@ -299,6 +313,24 @@ export class Home extends Component {
 
 	                </div>
                 </Grid>
+	            <div style={{position:"fixed", left: 5, bottom: 5}}>
+		            {
+			            (!!this.state.selectedFile && this.state.selectedFile.size > 0) &&
+			            <Fab size="small" variant="extended" onClick={this.download} color="primary">
+				            <CloudDownload/>
+				            &nbsp;&nbsp;{this.state.selectedFile.key}
+			            </Fab>
+		            }
+	            </div>
+	            <div style={{position:"fixed", left: 5, bottom: 50}}>
+		            {
+			            (!!this.state.selectedFolder && this.state.selectedFolder.size === 0) &&
+			            <Fab size="small" variant="extended" onClick={this.handleCreateFiles} color="default">
+				            <CloudUpload/>
+				            &nbsp;&nbsp;{this.state.selectedFolder.key}
+			            </Fab>
+		            }
+	            </div>
             </Grid>
         );
     }
